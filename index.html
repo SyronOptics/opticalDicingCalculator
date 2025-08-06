@@ -68,6 +68,31 @@
             padding: 15px;
             background-color: #e9f7ef;
             border-radius: 4px;
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            overflow-x: auto;
+        }
+        .result-item {
+            flex: 1;
+            min-width: 150px;
+            text-align: center;
+            padding: 15px;
+            background-color: #ffffff;
+            border-radius: 4px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            white-space: nowrap;
+            display: flex;
+            flex-direction: row;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+        .result-item span {
+            white-space: nowrap;
+        }
+        .result-item span:first-child {
+            font-weight: bold;
         }
         .wafer-rect {
             fill: #4CAF50;
@@ -165,16 +190,15 @@
         
         <button id="calculateBtn">Calculate</button>
         
-        <div class="content-wrapper" style="display: flex; gap: 20px; margin-top: 20px;">
-            <div class="result-section" style="flex: 1;">
-                <h2>Results</h2>
-                <div id="results"></div>
-            </div>
-            
-            <div class="visualization" style="flex: 2;">
-                <h2>Visualization</h2>
-                <div id="visualization"></div>
-                <div class="legend">
+        <div class="result-section">
+            <h2>Results</h2>
+            <div id="results"></div>
+        </div>
+        
+        <div class="visualization">
+            <h2>Visualization</h2>
+            <div id="visualization"></div>
+            <div class="legend">
                 <div class="legend-item">
                     <div class="legend-color" style="background-color: #4CAF50;"></div>
                     <span>Wafer</span>
@@ -195,7 +219,6 @@
                     <div class="legend-color" style="background-color: #FF5722;"></div>
                     <span>Blade Cut</span>
                 </div>
-            </div>
             </div>
         </div>
     </div>
@@ -387,14 +410,14 @@
             // Total dies
             const totalDies = numDiesX * numDiesY;
             
-            // Display results
+            // Display results horizontally
             resultsDiv.innerHTML = `
-                <p><strong>Wafer Size:</strong> ${waferSize} x ${waferSize} mm</p>
-                <p><strong>Usable Area:</strong> ${usableSize} x ${usableSize} mm (after ${margin}mm margin)</p>
-                <p><strong>Filter Shape:</strong> ${dieType === 'square' ? 'Rectangle' : 'Round'}</p>
-                <p><strong>Filter Size:</strong> ${typeof dieSize === 'object' ? `${dieSize.x} x ${dieSize.y} mm` : `${dieSize} mm ${dieType === 'round' ? '(diameter)' : '(width x height)'}`}</p>
-                <p><strong>Blade Width:</strong> ${bladeWidth} mm</p>
-                <p><strong>Total Cut:</strong> ${totalDies}</p>
+                <div class="result-item"><span><strong>Wafer Size:</strong></span><span>${waferSize} x ${waferSize} mm</span></div>
+                <div class="result-item"><span><strong>Usable Area:</strong></span><span>${usableSize} x ${usableSize} mm (after ${margin}mm margin)</span></div>
+                <div class="result-item"><span><strong>Filter Shape:</strong></span><span>${dieType === 'square' ? 'Rectangle' : 'Round'}</span></div>
+                <div class="result-item"><span><strong>Filter Size:</strong></span><span>${typeof dieSize === 'object' ? `${dieSize.x} x ${dieSize.y} mm` : `${dieSize} mm ${dieType === 'round' ? '(diameter)' : '(width x height)'}`}</span></div>
+                <div class="result-item"><span><strong>Blade Width:</strong></span><span>${bladeWidth} mm</span></div>
+                <div class="result-item"><span><strong>Total Cut:</strong></span><span>${totalDies}</span></div>
             `;
             
             // Visualize
