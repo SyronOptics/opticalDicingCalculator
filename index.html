@@ -1,0 +1,497 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Optical Dicing Calculator</title>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            text-align: center;
+            color: #333;
+        }
+        .input-section {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        .input-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        input, select {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+        button {
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px 15px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        .visualization {
+            margin-top: 30px;
+            text-align: center;
+        }
+        .result-section {
+            margin-top: 20px;
+            padding: 15px;
+            background-color: #e9f7ef;
+            border-radius: 4px;
+        }
+        .wafer-rect {
+            fill: #4CAF50;
+            stroke: #2E7D32;
+            stroke-width: 1;
+        }
+        .die-rect {
+            fill: #2196F3;
+            stroke: #0D47A1;
+            stroke-width: 1;
+        }
+        .margin-rect {
+            fill: #FFC107;
+            stroke: #FF8F00;
+            stroke-width: 1;
+            stroke-dasharray: 3,3;
+        }
+        .round-die-circle {
+            fill: #2196F3;
+            stroke: #0D47A1;
+            stroke-width: 1;
+        }
+        .blade-line {
+            stroke: #FF5722;
+            stroke-width: 1;
+        }
+        .legend {
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 15px;
+            margin-top: 20px;
+        }
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        .legend-color {
+            width: 20px;
+            height: 20px;
+            border: 1px solid #333;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Optical Dicing Calculator</h1>
+        
+        <div class="input-section">
+            <div class="input-group">
+                <label for="waferSize">Wafer Size (mm):</label>
+                <select id="waferSize">
+                    <option value="80">80 x 80 mm</option>
+                    <option value="60">60 x 60 mm</option>
+                    <option value="100">100 x 100 mm</option>
+                </select>
+            </div>
+            
+            <div class="input-group">
+            <label for="dieType">Filter Shape:</label>
+            <select id="dieType">
+                <option value="square">Rectangle</option>
+                <option value="round">Round</option>
+            </select>
+        </div>
+            
+            <div class="input-group">
+                <label for="dieSize">Filter Size (mm):</label>
+                <select id="dieSize">
+                    <!-- Options will be populated by JavaScript -->
+                </select>
+                <div id="customRectangleInputs" style="display: none; margin-top: 10px;">
+                <label for="customRectangleX">X (mm):</label>
+                <input type="number" id="customRectangleX" placeholder="Width" min="1" step="0.1" style="width: 100%;">
+                <label for="customRectangleY" style="margin-left: 10px;">Y (mm):</label>
+                <input type="number" id="customRectangleY" placeholder="Height" min="1" step="0.1" style="width: 100%;">
+            </div>
+            <div id="customCircleInputs" style="display: none; margin-top: 10px;">
+                <label for="customCircleDiameter">Diameter (mm):</label>
+                <input type="number" id="customCircleDiameter" placeholder="Diameter" min="1" step="0.1" style="width: 100%;">
+            </div>
+            </div>
+            
+            <div class="input-group">
+                <label for="bladeWidth">Blade Width (mm):</label>
+                <input type="number" id="bladeWidth" min="0" step="0.1" value="2">
+            </div>
+            
+            <div class="input-group">
+                <label for="margin">Margin (mm):</label>
+                <input type="number" id="margin" min="0" step="0.1" value="5">
+            </div>
+        </div>
+        
+        <button id="calculateBtn">Calculate</button>
+        
+        <div class="content-wrapper" style="display: flex; gap: 20px; margin-top: 20px;">
+            <div class="result-section" style="flex: 1;">
+                <h2>Results</h2>
+                <div id="results"></div>
+            </div>
+            
+            <div class="visualization" style="flex: 2;">
+                <h2>Visualization</h2>
+                <div id="visualization"></div>
+                <div class="legend">
+                <div class="legend-item">
+                    <div class="legend-color" style="background-color: #4CAF50;"></div>
+                    <span>Wafer</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color" style="background-color: #2196F3;"></div>
+                    <span>Rectangle Filter</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color" style="background-color: #2196F3;"></div>
+                    <span>Round Filter</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color" style="background-color: #FFC107;"></div>
+                    <span>Margin</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color" style="background-color: #FF5722;"></div>
+                    <span>Blade Cut</span>
+                </div>
+            </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Global variables
+        let waferSize = 80;
+        let dieType = 'square';
+        let dieSize = 10; // Default die size (mm) or {x: 10, y: 10} for custom
+        let bladeWidth = 2;
+        let margin = 5;
+        
+        // DOM elements
+        const waferSizeSelect = document.getElementById('waferSize');
+        const dieTypeSelect = document.getElementById('dieType');
+        const dieSizeSelect = document.getElementById('dieSize');
+        const bladeWidthInput = document.getElementById('bladeWidth');
+        const marginInput = document.getElementById('margin');
+        const calculateBtn = document.getElementById('calculateBtn');
+        const resultsDiv = document.getElementById('results');
+        const visualizationDiv = document.getElementById('visualization');
+        
+        // Event listeners
+        waferSizeSelect.addEventListener('change', () => {
+            waferSize = parseInt(waferSizeSelect.value);
+        });
+        
+        dieTypeSelect.addEventListener('change', () => {
+            dieType = dieTypeSelect.value;
+            // Update die size options based on die type
+            updateDieSizeOptions();
+            
+            // Handle custom inputs when switching filter types
+            const customRectangleInputs = document.getElementById('customRectangleInputs');
+            const customCircleInputs = document.getElementById('customCircleInputs');
+            
+            if (dieSizeSelect.value === 'custom') {
+                if (dieType === 'square') {
+                    customRectangleInputs.style.display = 'block';
+                    customCircleInputs.style.display = 'none';
+                    const customX = parseFloat(document.getElementById('customRectangleX').value) || 10;
+                    const customY = parseFloat(document.getElementById('customRectangleY').value) || 10;
+                    dieSize = { x: customX, y: customY };
+                } else {
+                    customRectangleInputs.style.display = 'none';
+                    customCircleInputs.style.display = 'block';
+                    const diameter = parseFloat(document.getElementById('customCircleDiameter').value) || 10;
+                    dieSize = diameter;
+                }
+            }
+        });
+        
+        dieSizeSelect.addEventListener('change', () => {
+            const customRectangleInputs = document.getElementById('customRectangleInputs');
+            const customCircleInputs = document.getElementById('customCircleInputs');
+            
+            // Hide both custom input sections by default
+            customRectangleInputs.style.display = 'none';
+            customCircleInputs.style.display = 'none';
+            
+            if (dieSizeSelect.value === 'custom') {
+                if (dieType === 'square') {
+                    // Show rectangle inputs
+                    customRectangleInputs.style.display = 'block';
+                    const customX = parseFloat(document.getElementById('customRectangleX').value) || 10;
+                    const customY = parseFloat(document.getElementById('customRectangleY').value) || 10;
+                    dieSize = { x: customX, y: customY };
+                } else {
+                    // Show circle input
+                    customCircleInputs.style.display = 'block';
+                    const diameter = parseFloat(document.getElementById('customCircleDiameter').value) || 10;
+                    dieSize = diameter;
+                }
+            } else {
+                dieSize = parseFloat(dieSizeSelect.value);
+            }
+        });
+        
+        // Rectangle custom inputs
+        document.getElementById('customRectangleX').addEventListener('input', (e) => {
+            const customX = parseFloat(e.target.value) || 0;
+            const customY = parseFloat(document.getElementById('customRectangleY').value) || 0;
+            dieSize = { x: customX, y: customY };
+        });
+        
+        document.getElementById('customRectangleY').addEventListener('input', (e) => {
+            const customX = parseFloat(document.getElementById('customRectangleX').value) || 0;
+            const customY = parseFloat(e.target.value) || 0;
+            dieSize = { x: customX, y: customY };
+        });
+        
+        // Circle custom input
+        document.getElementById('customCircleDiameter').addEventListener('input', (e) => {
+            dieSize = parseFloat(e.target.value) || 0;
+        });
+        
+        bladeWidthInput.addEventListener('input', () => {
+            bladeWidth = parseFloat(bladeWidthInput.value);
+        });
+        
+        marginInput.addEventListener('input', () => {
+            margin = parseFloat(marginInput.value);
+        });
+        
+        calculateBtn.addEventListener('click', calculate);
+        
+        // Initialize
+        updateDieSizeOptions();
+        // Set initial die size
+        dieSize = parseFloat(dieSizeSelect.value);
+        calculate();
+        
+        // Functions
+        function updateDieSizeOptions() {
+            dieSizeSelect.innerHTML = '';
+            
+            // Add custom option
+            const customOption = document.createElement('option');
+            customOption.value = 'custom';
+            customOption.textContent = 'Custom';
+            dieSizeSelect.appendChild(customOption);
+            
+            if (dieType === 'square') {
+                const sizes = [5, 9, 10, 15];
+                sizes.forEach(size => {
+                    const option = document.createElement('option');
+                    option.value = size;
+                    option.textContent = `${size} x ${size} mm`;
+                    dieSizeSelect.appendChild(option);
+                });
+            } else {
+                // For round dies, we'll use diameter
+                const sizes = [5, 10, 12.5, 15, 25.4];
+                sizes.forEach(size => {
+                    const option = document.createElement('option');
+                    option.value = size;
+                    option.textContent = `Dia ${size} mm` + (size === 5 || size === 10 ? ` (requires ${size + 2} x ${size + 2} mm)` : '');
+                    dieSizeSelect.appendChild(option);
+                });
+            }
+            
+            // Set default selection
+            dieSizeSelect.value = dieType === 'square' ? '10' : '10';
+            dieSize = parseInt(dieSizeSelect.value);
+            
+            // Hide custom inputs by default
+            document.getElementById('customRectangleInputs').style.display = 'none';
+            document.getElementById('customCircleInputs').style.display = 'none';
+        }
+        
+        function calculate() {
+            // Calculate usable area
+            const usableSize = waferSize - (2 * margin);
+            
+            // Handle custom die size input correctly
+            let effectiveDieWidth, effectiveDieHeight;
+            if (typeof dieSize === 'object') {
+                // Custom rectangle size with separate x and y
+                effectiveDieWidth = dieSize.x;
+                effectiveDieHeight = dieSize.y;
+            } else if (dieType === 'round' && dieSizeSelect.value === 'custom') {
+                // Custom circle size (diameter)
+                effectiveDieWidth = dieSize + 2; // Add 2mm margin for round cuts
+                effectiveDieHeight = dieSize + 2;
+            } else {
+                // Preset size (square or round)
+                effectiveDieWidth = dieSize;
+                effectiveDieHeight = dieSize;
+                if (dieType === 'round') {
+                    effectiveDieWidth = dieSize + 2; // Add 2mm margin for round cuts
+                    effectiveDieHeight = dieSize + 2;
+                }
+            }
+            
+            // Calculate number of dies that fit
+            const dieWithBladeX = effectiveDieWidth + bladeWidth;
+            const dieWithBladeY = effectiveDieHeight + bladeWidth;
+            const numDiesX = Math.floor(usableSize / dieWithBladeX);
+            const numDiesY = Math.floor(usableSize / dieWithBladeY);
+            
+            // Calculate actual used space
+            const usedSpaceX = (numDiesX * dieWithBladeX) - bladeWidth;
+            const usedSpaceY = (numDiesY * dieWithBladeY) - bladeWidth;
+            
+            // Calculate waste
+            const wasteX = usableSize - usedSpaceX;
+            const wasteY = usableSize - usedSpaceY;
+            
+            // Total dies
+            const totalDies = numDiesX * numDiesY;
+            
+            // Display results
+            resultsDiv.innerHTML = `
+                <p><strong>Wafer Size:</strong> ${waferSize} x ${waferSize} mm</p>
+                <p><strong>Usable Area:</strong> ${usableSize} x ${usableSize} mm (after ${margin}mm margin)</p>
+                <p><strong>Filter Shape:</strong> ${dieType === 'square' ? 'Rectangle' : 'Round'}</p>
+                <p><strong>Filter Size:</strong> ${typeof dieSize === 'object' ? `${dieSize.x} x ${dieSize.y} mm` : `${dieSize} mm ${dieType === 'round' ? '(diameter)' : '(width x height)'}`}</p>
+                <p><strong>Blade Width:</strong> ${bladeWidth} mm</p>
+                <p><strong>Total Cut:</strong> ${totalDies}</p>
+            `;
+            
+            // Visualize
+            visualize(waferSize, usableSize, numDiesX, numDiesY, dieSize, bladeWidth, margin);
+        }
+        
+        function visualize(waferSize, usableSize, numDiesX, numDiesY, dieSize, bladeWidth, margin) {
+            // Clear previous visualization
+            visualizationDiv.innerHTML = '';
+            
+            // Set up SVG dimensions
+            const svgSize = 600;
+            const scale = svgSize / waferSize;
+            
+            // Create SVG
+            const svg = d3.select('#visualization')
+                .append('svg')
+                .attr('width', svgSize)
+                .attr('height', svgSize)
+                .attr('viewBox', `0 0 ${waferSize} ${waferSize}`);
+            
+            // Draw wafer
+            svg.append('rect')
+                .attr('x', 0)
+                .attr('y', 0)
+                .attr('width', waferSize)
+                .attr('height', waferSize)
+                .attr('class', 'wafer-rect');
+            
+            // Draw margin
+            svg.append('rect')
+                .attr('x', margin)
+                .attr('y', margin)
+                .attr('width', usableSize)
+                .attr('height', usableSize)
+                .attr('class', 'margin-rect');
+            
+            // Draw dies
+            let dieWidth, dieHeight;
+            if (typeof dieSize === 'object') {
+                // Custom rectangle size with separate x and y
+                dieWidth = dieSize.x;
+                dieHeight = dieSize.y;
+            } else if (dieType === 'round' && dieSizeSelect.value === 'custom') {
+                // Custom circle size (diameter)
+                dieWidth = dieSize;
+                dieHeight = dieSize;
+            } else {
+                // Preset size (square or round)
+                dieWidth = dieSize;
+                dieHeight = dieSize;
+            }
+            
+            const dieWithBladeX = dieWidth + bladeWidth;
+            const dieWithBladeY = dieHeight + bladeWidth;
+            
+            for (let i = 0; i < numDiesX; i++) {
+                for (let j = 0; j < numDiesY; j++) {
+                    const x = margin + (i * dieWithBladeX);
+                    const y = margin + (j * dieWithBladeY);
+                    
+                    if (dieType === 'square') {
+                        svg.append('rect')
+                            .attr('x', x)
+                            .attr('y', y)
+                            .attr('width', dieWidth)
+                            .attr('height', dieHeight)
+                            .attr('class', 'die-rect');
+                    } else {
+                        // For round dies, draw circle without the square boundary
+                        const radius = Math.min(dieWidth, dieHeight) / 2;
+                        svg.append('circle')
+                            .attr('cx', x + (dieWidth / 2))
+                            .attr('cy', y + (dieHeight / 2))
+                            .attr('r', radius)
+                            .attr('class', 'round-die-circle');
+                    }
+                    
+                    // Draw vertical blade cut (except for the last column)
+                    if (i < numDiesX - 1) {
+                        svg.append('line')
+                            .attr('x1', x + dieWidth + (bladeWidth / 2))
+                            .attr('y1', margin)
+                            .attr('x2', x + dieWidth + (bladeWidth / 2))
+                            .attr('y2', margin + (numDiesY * dieWithBladeY) - bladeWidth)
+                            .attr('class', 'blade-line');
+                    }
+                    
+                    // Draw horizontal blade cut (except for the last row)
+                    if (j < numDiesY - 1) {
+                        svg.append('line')
+                            .attr('x1', margin)
+                            .attr('y1', y + dieHeight + (bladeWidth / 2))
+                            .attr('x2', margin + (numDiesX * dieWithBladeX) - bladeWidth)
+                            .attr('y2', y + dieHeight + (bladeWidth / 2))
+                            .attr('class', 'blade-line');
+                    }
+                }
+            }
+        }
+    </script>
+</body>
+</html>
